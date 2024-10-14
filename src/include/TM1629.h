@@ -118,6 +118,24 @@ typedef struct TM1629_Handler_s
 } TM1629_Handler_t;
 
 
+/* Exported Macros --------------------------------------------------------------*/
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_INIT(HANDLER, FUNC) \
+  (HANDLER)->Platform.Init = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_DEINIT(HANDLER, FUNC) \
+  (HANDLER)->Platform.DeInit = FUNC
+
+
 
 /**
  ==================================================================================
