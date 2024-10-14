@@ -60,6 +60,39 @@
 #define COMMAND_DC_DISPLAY_IS_ON    0x08  // 0b00001000
 
 
+/* Private Macros ---------------------------------------------------------------*/
+#define TM1629_CHECK_PLATFORM_INIT(HANDLER)       ((HANDLER)->Platform.Init)
+#define TM1629_CHECK_PLATFORM_DEINIT(HANDLER)     ((HANDLER)->Platform.DeInit)
+#define TM1629_CHECK_PLATFORM_WRITE_STB(HANDLER)  ((HANDLER)->Platform.WriteSTB)
+#define TM1629_CHECK_PLATFORM_DIR_DIO(HANDLER)    ((HANDLER)->Platform.GPIO.DirDIO)
+#define TM1629_CHECK_PLATFORM_WRITE_DIO(HANDLER)  ((HANDLER)->Platform.GPIO.WriteDIO)
+#define TM1629_CHECK_PLATFORM_WRITE_CLK(HANDLER)  ((HANDLER)->Platform.GPIO.WriteCLK)
+#define TM1629_CHECK_PLATFORM_READ_DIO(HANDLER)   ((HANDLER)->Platform.GPIO.ReadDIO)
+#define TM1629_CHECK_PLATFORM_DELAY_US(HANDLER)   ((HANDLER)->Platform.GPIO.DelayUs)
+
+#define TM1629_PLATFORM_INIT(HANDLER)     (HANDLER)->Platform.Init()
+#define TM1629_PLATFORM_DEINIT(HANDLER)   (HANDLER)->Platform.DeInit()
+#define TM1629_WRITE_STB(HANDLER, STATE)  (HANDLER)->Platform.WriteSTB(STATE)
+#define TM1629_DIR_DIO(HANDLER, DIR)      (HANDLER)->Platform.GPIO.DirDIO(DIR)
+#define TM1629_WRITE_DIO(HANDLER, STATE)  (HANDLER)->Platform.GPIO.WriteDIO(STATE)
+#define TM1629_WRITE_CLK(HANDLER, STATE)  (HANDLER)->Platform.GPIO.WriteCLK(STATE)
+#define TM1629_READ_DIO(HANDLER)          (HANDLER)->Platform.GPIO.ReadDIO()
+#define TM1629_DELAY_US(HANDLER, DELAY)   (HANDLER)->Platform.GPIO.DelayUs(DELAY)
+
+#define TM1629_CHECK_RES_PLATFORM(FUNC)        (FUNC >= 0)
+
+#if (TM1629_CONFIG_SUPPORT_SPI && TM1629_CONFIG_SUPPORT_GPIO)
+#define TM1629_IS_COMMUNICATION_GPIO(HANDLER)  ((HANDLER)->Platform.Communication == TM1629_COMMUNICATION_GPIO)
+#define TM1629_IS_COMMUNICATION_SPI(HANDLER)   ((HANDLER)->Platform.Communication == TM1629_COMMUNICATION_SPI)
+#elif (TM1629_CONFIG_SUPPORT_SPI)
+#define TM1629_IS_COMMUNICATION_SPI(HANDLER)   1
+#define TM1629_IS_COMMUNICATION_GPIO(HANDLER)  0
+#elif (TM1629_CONFIG_SUPPORT_GPIO)
+#define TM1629_IS_COMMUNICATION_SPI(HANDLER)   0
+#define TM1629_IS_COMMUNICATION_GPIO(HANDLER)  1
+#endif
+
+
 /* Private variables ------------------------------------------------------------*/
 /**
  * @brief  Convert HEX number to Seven-Segment code
@@ -140,8 +173,24 @@ TM1629_Init(TM1629_Handler_t *Handler, TM1629_DisplayType_t Type)
     Handler->DisplayType = TM1629_DISPLAY_TYPE_COM_ANODE;
 #endif
 
-  if (Handler->Platform.Init)
-    Handler->Platform.Init();
+  if (TM1629_CHECK_PLATFORM_INIT(Handler))
+    if (!TM1629_CHECK_RES_PLATFORM(TM1629_PLATFORM_INIT(Handler)))
+      return TM1629_FAIL;
+
+  if (TM1629_IS_COMMUNICATION_GPIO(Handler))
+  {
+    if (!TM1629_CHECK_PLATFORM_DIR_DIO(Handler) ||
+        !TM1629_CHECK_PLATFORM_WRITE_STB(Handler) ||
+        !TM1629_CHECK_PLATFORM_WRITE_DIO(Handler) ||
+        !TM1629_CHECK_PLATFORM_WRITE_CLK(Handler) ||
+        !TM1629_CHECK_PLATFORM_READ_DIO(Handler) ||
+        !TM1629_CHECK_PLATFORM_DELAY_US(Handler))
+      return TM1629_FAIL;
+  }
+  else if (TM1629_IS_COMMUNICATION_SPI(Handler))
+  {
+    return TM1629_FAIL;
+  }
 
   return TM1629_OK;
 }
@@ -155,8 +204,9 @@ TM1629_Init(TM1629_Handler_t *Handler, TM1629_DisplayType_t Type)
 TM1629_Result_t
 TM1629_DeInit(TM1629_Handler_t *Handler)
 {
-  if (Handler->Platform.DeInit)
-    Handler->Platform.DeInit();
+  if (TM1629_CHECK_PLATFORM_DEINIT(Handler))
+    if (TM1629_CHECK_RES_PLATFORM(TM1629_PLATFORM_DEINIT(Handler)))
+      return TM1629_FAIL;
 
   return TM1629_OK;
 }

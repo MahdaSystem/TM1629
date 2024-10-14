@@ -50,6 +50,18 @@ extern "C" {
   #define TM1629_CONFIG_SUPPORT_COM_ANODE  1
 #endif
 
+#ifndef TM1629_CONFIG_SUPPORT_SPI
+  #define TM1629_CONFIG_SUPPORT_SPI  1
+#endif
+
+#ifndef TM1629_CONFIG_SUPPORT_GPIO
+  #define TM1629_CONFIG_SUPPORT_GPIO 1
+#endif
+
+#if (TM1629_CONFIG_SUPPORT_SPI == 0 && TM1629_CONFIG_SUPPORT_GPIO == 0)
+  #error "TM1629: SPI and GPIO can not be both disabled!"
+#endif
+
 
 /* Exported Constants -----------------------------------------------------------*/
 #define TM1629_DISPLAY_STATE_OFF          0
@@ -81,12 +93,70 @@ typedef enum TM1629_DisplayType_e
 
 
 /**
+ * @brief  Communication type
+ */
+typedef enum TM1629_Communication_e
+{
+  TM1629_COMMUNICATION_GPIO = 0,
+  TM1629_COMMUNICATION_SPI  = 1,
+} TM1629_Communication_t;
+
+
+/**
  * @brief  Function type for Initialize/Deinitialize the platform dependent layer.
  * @retval 
  *         -  0: The operation was successful.
  *         - -1: The operation failed. 
  */
 typedef int8_t (*TM1629_Platform_InitDeinit_t)(void);
+
+
+/**
+ * @brief  Function type for GPIO write
+ * @param  State: GPIO state
+ *              - 0: Low
+ *              - 1: High
+ * 
+ * @retval 
+ *         -  0: The operation was successful.
+ *         - -1: The operation failed. 
+ */
+typedef int8_t (*TM1629_Platform_GPIO_Write_t)(uint8_t State);
+
+
+#if (TM1629_CONFIG_SUPPORT_GPIO)
+/**
+ * @brief  Function type for GPIO configuration
+ * @param  Dir: GPIO direction
+ *              - 0: Input
+ *              - 1: Output
+ * 
+ * @retval 
+ *         -  0: The operation was successful.
+ *         - -1: The operation failed. 
+ */
+typedef int8_t (*TM1629_Platform_GPIO_Config_t)(uint8_t Dir);
+
+
+/**
+ * @brief  Function type for GPIO read
+ * @retval
+ *         -  0: Low
+ *         -  1: High
+ *         - -1: The operation failed. 
+ */
+typedef int8_t (*TM1629_Platform_GPIO_Read_t)(void);
+
+
+/**
+ * @brief  Function type for Delay
+ * @param  Delay: Delay time in milliseconds/microseconds
+ * @retval 
+ *         -  0: The operation was successful.
+ *         - -1: The operation failed. 
+ */
+typedef int8_t (*TM1629_Platform_Delay_t)(uint8_t Delay);
+#endif
 
 
 /**
@@ -98,10 +168,48 @@ typedef int8_t (*TM1629_Platform_InitDeinit_t)(void);
  */
 typedef struct TM1629_Platform_s
 {
+#if (TM1629_CONFIG_SUPPORT_GPIO && TM1629_CONFIG_SUPPORT_SPI)
+  // Communication type
+  TM1629_Communication_t Communication;
+#endif
+
   // Initialize platform dependent layer
   TM1629_Platform_InitDeinit_t Init;
   // De-initialize platform dependent layer
   TM1629_Platform_InitDeinit_t DeInit;
+
+  // Write STB pin
+  TM1629_Platform_GPIO_Write_t WriteSTB;
+
+  union
+  {
+#if TM1629_CONFIG_SUPPORT_GPIO
+    // It is It is up to the user to use a 3-wire interface (by shorting the DIN
+    // and DOUT signals together) or 4-wire (separate DIN and DOUT signals).
+    struct
+    {
+      // DIO pin(s) configuration
+      TM1629_Platform_GPIO_Config_t DirDIO;
+      // DIO pin write
+      TM1629_Platform_GPIO_Write_t WriteDIO;
+      // DIO pin read
+      TM1629_Platform_GPIO_Read_t ReadDIO;
+
+      // CLK pin write
+      TM1629_Platform_GPIO_Write_t WriteCLK;
+
+      // Delay function in microseconds
+      TM1629_Platform_Delay_t DelayUs;
+    } GPIO;
+#endif
+
+#if TM1629_CONFIG_SUPPORT_SPI
+    struct
+    {
+      // Will be used in future
+    } SPI;
+#endif
+  };
 } TM1629_Platform_t;
 
 
@@ -114,11 +222,28 @@ typedef struct TM1629_Handler_s
   // Display type (Common-Cathode or Common-Anode)
   TM1629_DisplayType_t DisplayType;
 
+  // Platform dependent layer
   TM1629_Platform_t Platform;
 } TM1629_Handler_t;
 
 
 /* Exported Macros --------------------------------------------------------------*/
+#if (TM1629_CONFIG_SUPPORT_SPI && TM1629_CONFIG_SUPPORT_GPIO)
+/**
+ * @brief  Link platform dependent layer communication type
+ * @param  HANDLER: Pointer to handler
+ * @param  COM: Communication type
+ *         - TM1629_COMMUNICATION_GPIO
+ *         - TM1629_COMMUNICATION_SPI
+ * 
+ */
+#define TM1629_PLATFORM_SET_COMMUNICATION(HANDLER, COM) \
+  (HANDLER)->Platform.Communication = COM
+#else
+#define TM1629_PLATFORM_SET_COMMUNICATION(HANDLER, COM) \
+  do {} while(0)
+#endif
+
 /**
  * @brief  Link platform dependent layer functions to handler
  * @param  HANDLER: Pointer to handler
@@ -134,6 +259,57 @@ typedef struct TM1629_Handler_s
  */
 #define TM1629_PLATFORM_LINK_DEINIT(HANDLER, FUNC) \
   (HANDLER)->Platform.DeInit = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_WRITE_STB(HANDLER, FUNC) \
+  (HANDLER)->Platform.WriteSTB = FUNC
+
+#if (TM1629_CONFIG_SUPPORT_GPIO)
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_DIR_DIO(HANDLER, FUNC) \
+  (HANDLER)->Platform.GPIO.DirDIO = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_WRITE_DIO(HANDLER, FUNC) \
+  (HANDLER)->Platform.GPIO.WriteDIO = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+
+#define TM1629_PLATFORM_LINK_READ_DIO(HANDLER, FUNC) \
+  (HANDLER)->Platform.GPIO.ReadDIO = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_WRITE_CLK(HANDLER, FUNC) \
+  (HANDLER)->Platform.GPIO.WriteCLK = FUNC
+
+/**
+ * @brief  Link platform dependent layer functions to handler
+ * @param  HANDLER: Pointer to handler
+ * @param  FUNC: Function name
+ */
+#define TM1629_PLATFORM_LINK_DELAY_US(HANDLER, FUNC) \
+  (HANDLER)->Platform.GPIO.DelayUs = FUNC
+#endif
 
 
 

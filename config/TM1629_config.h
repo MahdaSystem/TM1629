@@ -43,6 +43,11 @@ extern "C" {
  */   
 #define TM1629_CONFIG_SUPPORT_COM_ANODE  1
 
+/**
+ * @brief  Define the communication interface to use
+*/
+#define TM1629_CONFIG_SUPPORT_GPIO   1
+#define TM1629_CONFIG_SUPPORT_SPI    0
 
 
 #ifdef __cplusplus
