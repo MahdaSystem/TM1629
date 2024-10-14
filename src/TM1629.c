@@ -35,6 +35,80 @@
 #include "TM1629.h"
 
 
+/* Private Constants ------------------------------------------------------------*/
+/**
+ * @brief  Commands
+ */
+#define COMMAND_DATA_READING_WRITING_SETTING    0x40  // 0b01000000
+#define COMMAND_DISPLAY_CONTROL                 0x80  // 0b10000000
+#define COMMAND_ADDRESS_SETTING                 0xC0  // 0b11000000
+
+/**
+ * @brief  Data reading/writing setting command
+ */
+#define COMMAND_DRWS_WRITE_DATA_TO_DISPLAY_REGISTER   0x00  // 0b00000000
+#define COMMAND_DRWS_READ_KEY_SCANNING_DATA           0x02  // 0b00000010
+#define COMMAND_DRWS_AUTO_INCREASE_OF_ADDRESS         0x00  // 0b00000000
+#define COMMAND_DRWS_FIXED_ADDRESS                    0x04  // 0b00000100
+#define COMMAND_DRWS_NORMAL_MODE                      0x00  // 0b00000000
+#define COMMAND_DRWS_TEST_MODE                        0x08  // 0b00001000
+
+/**
+ * @brief  Display control command
+ */
+#define COMMAND_DC_DISPLAY_IS_OFF   0x00  // 0b00000000
+#define COMMAND_DC_DISPLAY_IS_ON    0x08  // 0b00001000
+
+
+/* Private variables ------------------------------------------------------------*/
+/**
+ * @brief  Convert HEX number to Seven-Segment code
+ */
+const uint8_t HexTo7Seg[40] =
+{
+  0x3F, // 0
+  0x06, // 1
+  0x5B, // 2
+  0x4F, // 3
+  0x66, // 4
+  0x6D, // 5
+  0x7D, // 6
+  0x07, // 7
+  0x7F, // 8
+  0x6F, // 9
+  0x77, // A
+  0x7c, // b
+  0x39, // C
+  0x5E, // d
+  0x79, // E
+  0x71, // F
+  0x6F, // g
+  0x3D, // G
+  0x74, // h
+  0x76, // H
+  0x05, // i
+  0x06, // I
+  0x0D, // j
+  0x30, // l
+  0x38, // L
+  0x54, // n
+  0x37, // N
+  0x5C, // o
+  0x3F, // O
+  0x73, // P
+  0x67, // q
+  0x50, // r
+  0x6D, // S
+  0x78, // t
+  0x1C, // u
+  0x3E, // U
+  0x66, // y
+  0x08, // _
+  0x40, // -
+  0x01  // Overscore
+};
+
+
 
 /**
  ==================================================================================
