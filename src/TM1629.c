@@ -145,6 +145,174 @@ const uint8_t HexTo7Seg[40] =
 
 /**
  ==================================================================================
+                           ##### Private Functions #####                           
+ ==================================================================================
+ */
+
+static inline void
+TM1629_StartComunication(TM1629_Handler_t *Handler)
+{
+  TM1629_WRITE_STB(Handler, 0);
+}
+
+static inline void
+TM1629_StopComunication(TM1629_Handler_t *Handler)
+{
+  TM1629_WRITE_STB(Handler, 1);
+}
+
+#if (TM1629_CONFIG_SUPPORT_GPIO)
+static inline int8_t
+TM1629_WriteBytesGPIO(TM1629_Handler_t *Handler,
+                      const uint8_t *Data, uint8_t NumOfBytes)
+{
+  uint8_t Buff = 0;
+
+  TM1629_DIR_DIO(Handler, 1);
+
+  for (uint8_t j = 0; j < NumOfBytes; j++)
+  {
+    Buff = Data[j];
+    for (uint8_t i = 0; i < 8; ++i, Buff >>= 1)
+    {
+      TM1629_WRITE_CLK(Handler, 0);
+      TM1629_DELAY_US(Handler, 1);
+      TM1629_WRITE_DIO(Handler, Buff & 0x01);
+      TM1629_WRITE_CLK(Handler, 1);
+      TM1629_DELAY_US(Handler, 1);
+    }
+  }
+
+  return 0;
+}
+
+static inline int8_t
+TM1629_ReadBytesGPIO(TM1629_Handler_t *Handler,
+                     uint8_t *Data, uint8_t NumOfBytes)
+{
+  uint8_t Buff = 0;
+
+  TM1629_DIR_DIO(Handler, 0);
+  TM1629_DELAY_US(Handler, 5);
+
+  for (uint8_t j = 0; j < NumOfBytes; j++)
+  {
+    Buff = 0;
+    for (uint8_t i = 0; i < 8; i++)
+    {
+      TM1629_WRITE_CLK(Handler, 0);
+      TM1629_DELAY_US(Handler, 1);
+      TM1629_WRITE_CLK(Handler, 1);
+      Buff |= (TM1629_READ_DIO(Handler) << i);
+      TM1629_DELAY_US(Handler, 1);
+    }
+
+    Data[j] = Buff;
+    TM1629_DELAY_US(Handler, 2);
+  }
+
+  return 0;
+}
+#endif
+
+#if (TM1629_CONFIG_SUPPORT_SPI)
+static inline int8_t
+TM1629_WriteBytesSPI(TM1629_Handler_t *Handler,
+                     const uint8_t *Data, uint8_t NumOfBytes)
+{
+  // TODO: Implement SPI communication
+  return -1;
+}
+
+static inline int8_t
+TM1629_ReadBytesSPI(TM1629_Handler_t *Handler,
+                    uint8_t *Data, uint8_t NumOfBytes)
+{
+  // TODO: Implement SPI communication
+  return -1;
+}
+#endif
+
+static int8_t
+TM1629_WriteBytes(TM1629_Handler_t *Handler,
+                  const uint8_t *Data, uint8_t NumOfBytes)
+{
+#if (TM1629_CONFIG_SUPPORT_GPIO && TM1629_CONFIG_SUPPORT_SPI)
+  if (TM1629_IS_COMMUNICATION_GPIO(Handler))
+    return TM1629_WriteBytesGPIO(Handler, Data, NumOfBytes);
+  else
+    return TM1629_WriteBytesSPI(Handler, Data, NumOfBytes);
+#elif (TM1629_CONFIG_SUPPORT_GPIO)
+  return TM1629_WriteBytesGPIO(Handler, Data, NumOfBytes);
+#elif (TM1629_CONFIG_SUPPORT_SPI)
+  return TM1629_WriteBytesSPI(Handler, Data, NumOfBytes);
+#endif
+
+  return -128;
+}
+
+static int8_t
+TM1629_ReadBytes(TM1629_Handler_t *Handler,
+                 uint8_t *Data, uint8_t NumOfBytes)
+{
+  #if (TM1629_CONFIG_SUPPORT_GPIO && TM1629_CONFIG_SUPPORT_SPI)
+  if (TM1629_IS_COMMUNICATION_GPIO(Handler))
+    return TM1629_ReadBytesGPIO(Handler, Data, NumOfBytes);
+  else
+    return TM1629_ReadBytesSPI(Handler, Data, NumOfBytes);
+#elif (TM1629_CONFIG_SUPPORT_GPIO)
+  return TM1629_ReadBytesGPIO(Handler, Data, NumOfBytes);
+#elif (TM1629_CONFIG_SUPPORT_SPI)
+  return TM1629_ReadBytesSPI(Handler, Data, NumOfBytes);
+#endif
+
+  return -128;
+}
+
+static int8_t
+TM1629_SetMultipleDisplayRegister(TM1629_Handler_t *Handler,
+                                  const uint8_t *DigitData,
+                                  uint8_t StartAddr, uint8_t Count)
+{
+  uint8_t Data = COMMAND_DATA_READING_WRITING_SETTING | 
+                 COMMAND_DRWS_WRITE_DATA_TO_DISPLAY_REGISTER |
+                 COMMAND_DRWS_AUTO_INCREASE_OF_ADDRESS |
+                 COMMAND_DRWS_NORMAL_MODE;
+
+  TM1629_StartComunication(Handler);
+  TM1629_WriteBytes(Handler, &Data, 1);
+  TM1629_StopComunication(Handler);
+
+  Data = COMMAND_ADDRESS_SETTING | StartAddr;
+
+  TM1629_StartComunication(Handler);
+  TM1629_WriteBytes(Handler, &Data, 1);
+  TM1629_WriteBytes(Handler, DigitData, Count);
+  TM1629_StopComunication(Handler);
+
+  return 0;
+}
+
+static int8_t
+TM1629_ScanKeyRegs(TM1629_Handler_t *Handler, uint8_t *KeyRegs)
+{
+  uint8_t Data = COMMAND_DATA_READING_WRITING_SETTING | 
+                 COMMAND_DRWS_READ_KEY_SCANNING_DATA |
+                 COMMAND_DRWS_AUTO_INCREASE_OF_ADDRESS |
+                 COMMAND_DRWS_NORMAL_MODE;
+
+  TM1629_StartComunication(Handler);
+  TM1629_WriteBytes(Handler, &Data, 1);
+  TM1629_ReadBytes(Handler, KeyRegs, 4);
+  TM1629_StopComunication(Handler);
+
+  return 0;
+}
+
+
+
+/**
+ ==================================================================================
                            ##### Common Functions #####                            
  ==================================================================================
  */
@@ -207,6 +375,136 @@ TM1629_DeInit(TM1629_Handler_t *Handler)
   if (TM1629_CHECK_PLATFORM_DEINIT(Handler))
     if (TM1629_CHECK_RES_PLATFORM(TM1629_PLATFORM_DEINIT(Handler)))
       return TM1629_FAIL;
+
+  return TM1629_OK;
+}
+
+
+
+/**
+ ==================================================================================
+                        ##### Public Display Functions #####                       
+ ==================================================================================
+ */
+
+/**
+ * @brief  Config display parameters
+ * @param  Handler: Pointer to handler
+ * @param  Brightness: Set brightness level
+ *         - 0: Display pulse width is set as 1/16
+ *         - 1: Display pulse width is set as 2/16
+ *         - 2: Display pulse width is set as 4/16
+ *         - 3: Display pulse width is set as 10/16
+ *         - 4: Display pulse width is set as 11/16
+ *         - 5: Display pulse width is set as 12/16
+ *         - 6: Display pulse width is set as 13/16
+ *         - 7: Display pulse width is set as 14/16
+ * 
+ * @param  DisplayState: Set display ON or OFF
+ *         - TM1629_DISPLAY_STATE_OFF: Set display state OFF
+ *         - TM1629_DISPLAY_STATE_ON: Set display state ON
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_ConfigDisplay(TM1629_Handler_t *Handler,
+                     uint8_t Brightness, uint8_t DisplayState)
+{
+  uint8_t Data = COMMAND_DISPLAY_CONTROL;
+  Data |= (Brightness & 0x07);
+  Data |= (DisplayState != TM1629_DISPLAY_STATE_OFF) ? (COMMAND_DC_DISPLAY_IS_ON) : (COMMAND_DC_DISPLAY_IS_OFF);
+
+  TM1629_StartComunication(Handler);
+  TM1629_WriteBytes(Handler, &Data, 1);
+  TM1629_StopComunication(Handler);
+
+  return TM1629_OK;
+}
+
+
+/**
+ * @brief  Set data to single digit in 7-segment format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Digit data
+ * @param  DigitPos: Digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetSingleDigit(TM1629_Handler_t *Handler,
+                      uint8_t DigitData, uint8_t DigitPos)
+{ 
+  if (Handler->DisplayType == TM1629_DISPLAY_TYPE_COM_CATHODE)
+    TM1629_SetMultipleDisplayRegister(Handler, &DigitData, DigitPos, 1);
+#if (TM1629_CONFIG_SUPPORT_COM_ANODE)
+  else
+    TM1629_SetMultipleDigit(Handler, &DigitData, DigitPos, 1);
+#endif
+  return TM1629_OK;
+}
+
+
+/**
+ * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Array to Digits data
+ * @param  StartAddr: First digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @param  Count: Number of segments to write data
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetMultipleDigit(TM1629_Handler_t *Handler, const uint8_t *DigitData,
+                        uint8_t StartAddr, uint8_t Count)
+{
+  uint8_t Shift = 0;
+  uint8_t DigitDataBuff = 0;
+  uint8_t i = 0;
+
+  if (Handler->DisplayType == TM1629_DISPLAY_TYPE_COM_CATHODE)
+    TM1629_SetMultipleDisplayRegister(Handler, DigitData, StartAddr, Count);
+#if (TM1629_CONFIG_SUPPORT_COM_ANODE)
+  else
+  {
+    for (uint8_t j = 0; j < Count; j++)
+    {
+      DigitDataBuff = DigitData[j];
+
+      if ((j + StartAddr) >= 0 && (j + StartAddr) <= 7)
+      {
+        Shift = j + StartAddr;
+        i = 0;
+      }
+      else
+      {
+        Shift = (j + StartAddr) - 8;
+        i = 1;
+      }
+
+      for (; i < 16; i += 2, DigitDataBuff >>= 1)
+      {
+        if (DigitDataBuff & 0x01)
+          Handler->DisplayRegister[i] |= (1 << Shift);
+        else
+          Handler->DisplayRegister[i] &= ~(1 << Shift);
+      }
+    }
+    TM1629_SetMultipleDisplayRegister(Handler, Handler->DisplayRegister, 0, 16);
+  }
+#endif
 
   return TM1629_OK;
 }

@@ -222,6 +222,10 @@ typedef struct TM1629_Handler_s
   // Display type (Common-Cathode or Common-Anode)
   TM1629_DisplayType_t DisplayType;
 
+#if (TM1629_CONFIG_SUPPORT_COM_ANODE)
+  uint8_t DisplayRegister[16];
+#endif
+
   // Platform dependent layer
   TM1629_Platform_t Platform;
 } TM1629_Handler_t;
@@ -343,6 +347,77 @@ TM1629_Init(TM1629_Handler_t *Handler, TM1629_DisplayType_t Type);
  */
 TM1629_Result_t
 TM1629_DeInit(TM1629_Handler_t *Handler);
+
+
+
+/**
+ ==================================================================================
+                           ##### Display Functions #####                           
+ ==================================================================================
+ */
+
+/**
+ * @brief  Config display parameters
+ * @param  Handler: Pointer to handler
+ * @param  Brightness: Set brightness level
+ *         - 0: Display pulse width is set as 1/16
+ *         - 1: Display pulse width is set as 2/16
+ *         - 2: Display pulse width is set as 4/16
+ *         - 3: Display pulse width is set as 10/16
+ *         - 4: Display pulse width is set as 11/16
+ *         - 5: Display pulse width is set as 12/16
+ *         - 6: Display pulse width is set as 13/16
+ *         - 7: Display pulse width is set as 14/16
+ * 
+ * @param  DisplayState: Set display ON or OFF
+ *         - TM1629_DISPLAY_STATE_OFF: Set display state OFF
+ *         - TM1629_DISPLAY_STATE_ON: Set display state ON
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_ConfigDisplay(TM1629_Handler_t *Handler,
+                     uint8_t Brightness, uint8_t DisplayState);
+
+
+/**
+ * @brief  Set data to single digit in 7-segment format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Digit data
+ * @param  DigitPos: Digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetSingleDigit(TM1629_Handler_t *Handler,
+                      uint8_t DigitData, uint8_t DigitPos);
+
+
+/**
+ * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Array to Digits data
+ * @param  StartAddr: First digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @param  Count: Number of segments to write data
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetMultipleDigit(TM1629_Handler_t *Handler, const uint8_t *DigitData,
+                        uint8_t StartAddr, uint8_t Count);
 
 
 
