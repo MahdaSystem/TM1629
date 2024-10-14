@@ -1018,3 +1018,63 @@ TM1629_SetMultipleDigit_CHAR(TM1629_Handler_t *Handler, const uint8_t *DigitData
   return TM1629_SetMultipleDigit(Handler,
                                  (const uint8_t *)DigitDataHEX, StartAddr, Count);
 }
+
+
+
+/** 
+ ==================================================================================
+                      ##### Public Keypad Functions #####                         
+ ==================================================================================
+ */
+
+/**
+ * @brief  Scan all 24 keys connected to TM1629
+ * @note   
+ *                   SEG1         SEG2         SEG3       ......      SEG8
+ *                     |            |            |                      |
+ *         K1  --  |K1_SEG1|    |K1_SEG2|    |K1_SEG3|    ......    |K1_SEG8|
+ *         K2  --  |K2_SEG1|    |K2_SEG2|    |K2_SEG3|    ......    |K2_SEG8|
+ *         K3  --  |K3_SEG1|    |K3_SEG2|    |K3_SEG3|    ......    |K3_SEG8|
+ *         K4  --  |K4_SEG1|    |K4_SEG2|    |K4_SEG3|    ......    |K4_SEG8|
+ * 
+ * @param  Handler: Pointer to handler
+ * @param  Keys: pointer to save key scan result
+ *         - bit0=>K1_SEG1, bit1=>K1_SEG2, ..., bit7=>K1_SEG8,
+ *         - bit8=>K2_SEG1, bit9=>K2_SEG2, ..., bit15=>K2_SEG8,
+ *         - bit16=>K3_SEG1, bit17=>K3_SEG2, ..., bit23=>K3_SEG8,
+ *         - bit24=>K4_SEG1, bit25=>K4_SEG2, ..., bit31=>K4_SEG8
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_ScanKeys(TM1629_Handler_t *Handler, uint32_t *Keys)
+{
+  uint8_t KeyRegs[4];
+  uint32_t KeysBuff = 0;
+  uint8_t Kn = 0x01;
+
+  TM1629_ScanKeyRegs(Handler, KeyRegs);
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    for (int8_t j = 3; j >= 0; j--)
+    {
+      KeysBuff <<= 1;
+
+      if (KeyRegs[j] & (Kn << 4))
+        KeysBuff |= 1;
+
+      KeysBuff <<= 1;
+
+      if (KeyRegs[j] & Kn)
+        KeysBuff |= 1;
+    }
+
+    Kn <<= 1;
+  }
+
+  *Keys = KeysBuff;
+
+  return TM1629_OK;
+}
