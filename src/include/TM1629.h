@@ -420,6 +420,93 @@ TM1629_SetMultipleDigit(TM1629_Handler_t *Handler, const uint8_t *DigitData,
                         uint8_t StartAddr, uint8_t Count);
 
 
+/**
+ * @brief  Set data to single digit in hexadecimal format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Digit data (0, 1, ... , 15, a, A, b, B, ... , f, F) 
+ * @param  DigitPos: Digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetSingleDigit_HEX(TM1629_Handler_t *Handler,
+                          uint8_t DigitData, uint8_t DigitPos);
+
+
+/**
+ * @brief  Set data to multiple digits in hexadecimal format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Array to Digits data. 
+ *                    (0, 1, ... , 15, a, A, b, B, ... , f, F)
+ * 
+ * @param  StartAddr: First digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @param  Count: Number of segments to write data
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetMultipleDigit_HEX(TM1629_Handler_t *Handler, const uint8_t *DigitData,
+                            uint8_t StartAddr, uint8_t Count);
+
+
+/**
+ * @brief  Set data to single digit in char format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Digit data
+ *                    Supported chars 0,1,2,3,4,5,6,7,8,9
+ *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
+ *                                    t,u,U,y,_,-,Overscore (use ~ to set)
+ * @param  DigitPos: Digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetSingleDigit_CHAR(TM1629_Handler_t *Handler,
+                           uint8_t DigitData, uint8_t DigitPos);
+
+
+/**
+ * @brief  Set data to multiple digits in char format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Array to Digits data. 
+ *                    Supported chars 0,1,2,3,4,5,6,7,8,9
+ *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
+ *                                    t,u,U,y,_,-,Overscore (use ~ to set)
+ * 
+ * @param  StartAddr: First digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @param  Count: Number of segments to write data
+ * @retval TM1629_Result_t
+ *         - TM1629_OK: Operation was successful
+ */
+TM1629_Result_t
+TM1629_SetMultipleDigit_CHAR(TM1629_Handler_t *Handler, const uint8_t *DigitData,
+                             uint8_t StartAddr, uint8_t Count);
+
+
 
 #ifdef __cplusplus
 }
