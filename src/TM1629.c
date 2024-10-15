@@ -309,6 +309,235 @@ TM1629_ScanKeyRegs(TM1629_Handler_t *Handler, uint8_t *KeyRegs)
   return 0;
 }
 
+static void
+TM1629_HexTo7Seg(const uint8_t *Hex, uint8_t *Data, uint8_t Count)
+{
+  uint8_t DecimalPoint = 0;
+  uint8_t Digit = 0;
+
+  if (!Hex || !Data)
+    return;
+
+  for (uint8_t i = 0; i < Count; i++)
+  {
+    DecimalPoint = Hex[i] & TM1629_DECIMAL_POINT;
+    Digit = Hex[i] & (~TM1629_DECIMAL_POINT);
+
+    if (Digit <= 15)
+    {
+      Data[i] = HexTo7Seg[Digit] | DecimalPoint;
+    }
+    else
+    {
+      switch (Digit)
+      {
+      case 'A':
+      case 'a':
+        Data[i] = HexTo7Seg[0x0A] | DecimalPoint;
+        break;
+
+      case 'B':
+      case 'b':
+        Data[i] = HexTo7Seg[0x0B] | DecimalPoint;
+        break;
+
+      case 'C':
+      case 'c':
+        Data[i] = HexTo7Seg[0x0C] | DecimalPoint;
+        break;
+
+      case 'D':
+      case 'd':
+        Data[i] = HexTo7Seg[0x0D] | DecimalPoint;
+        break;
+
+      case 'E':
+      case 'e':
+        Data[i] = HexTo7Seg[0x0E] | DecimalPoint;
+        break;
+
+      case 'F':
+      case 'f':
+        Data[i] = HexTo7Seg[0x0F] | DecimalPoint;
+        break;
+
+      default:
+        Data[i] = 0;
+        break;
+      }
+    }
+  }
+}
+
+
+static void
+TM1629_StringTo7Seg(const char *Str, uint8_t *Data, uint8_t Count)
+{
+  uint8_t DecimalPoint = 0;
+  char Ch = 0;
+
+  if (!Str|| !Data)
+    return;
+
+  for (uint8_t i = 0; i < Count; i++)
+  {
+    if (Str[i] == '.')
+      DecimalPoint = TM1629_DECIMAL_POINT;
+    else
+      DecimalPoint = Str[i] & TM1629_DECIMAL_POINT;
+    
+    Ch = Str[i] & (~TM1629_DECIMAL_POINT);
+
+    // numbers 0 - 9
+    if (Ch >= '0' && Ch <= '9')
+    {
+      Data[i] = HexTo7Seg[Ch - '0'] | DecimalPoint;
+    }
+    else
+    {
+      switch (Ch)
+      {
+      case 'A':
+      case 'a':
+        Data[i] = HexTo7Seg[0x0A] | DecimalPoint;
+        break;
+
+      case 'B':
+      case 'b':
+        Data[i] = HexTo7Seg[0x0B] | DecimalPoint;
+        break;
+
+      case 'C':
+      case 'c':
+        Data[i] = HexTo7Seg[0x0C] | DecimalPoint;
+        break;
+
+      case 'D':
+      case 'd':
+        Data[i] = HexTo7Seg[0x0D] | DecimalPoint;
+        break;
+
+      case 'E':
+      case 'e':
+        Data[i] = HexTo7Seg[0x0E] | DecimalPoint;
+        break;
+
+      case 'F':
+      case 'f':
+        Data[i] = HexTo7Seg[0x0F] | DecimalPoint;
+        break;
+
+      case 'g':
+        Data[i] = HexTo7Seg[0x10] | DecimalPoint;
+        break;
+
+      case 'G':
+        Data[i] = HexTo7Seg[0x11] | DecimalPoint;
+        break;
+
+      case 'h':
+        Data[i] = HexTo7Seg[0x12] | DecimalPoint;
+        break;
+
+      case 'H':
+        Data[i] = HexTo7Seg[0x13] | DecimalPoint;
+        break;
+
+      case 'i':
+        Data[i] = HexTo7Seg[0x14] | DecimalPoint;
+        break;
+
+      case 'I':
+        Data[i] = HexTo7Seg[0x15] | DecimalPoint;
+        break;
+
+      case 'j':
+      case 'J':
+        Data[i] = HexTo7Seg[0x16] | DecimalPoint;
+        break;
+
+      case 'l':
+        Data[i] = HexTo7Seg[0x17] | DecimalPoint;
+        break;
+
+      case 'L':
+        Data[i] = HexTo7Seg[0x18] | DecimalPoint;
+        break;
+
+      case 'n':
+        Data[i] = HexTo7Seg[0x19] | DecimalPoint;
+        break;
+
+      case 'N':
+        Data[i] = HexTo7Seg[0x1A] | DecimalPoint;
+        break;
+
+      case 'o':
+        Data[i] = HexTo7Seg[0x1B] | DecimalPoint;
+        break;
+
+      case 'O':
+        Data[i] = HexTo7Seg[0x1C] | DecimalPoint;
+        break;
+
+      case 'p':
+      case 'P':
+        Data[i] = HexTo7Seg[0x1D] | DecimalPoint;
+        break;
+
+      case 'q':
+      case 'Q':
+        Data[i] = HexTo7Seg[0x1E] | DecimalPoint;
+        break;
+
+      case 'r':
+      case 'R':
+        Data[i] = HexTo7Seg[0x1F] | DecimalPoint;
+        break;
+
+      case 's':
+      case 'S':
+        Data[i] = HexTo7Seg[0x20] | DecimalPoint;
+        break;
+
+      case 't':
+      case 'T':
+        Data[i] = HexTo7Seg[0x21] | DecimalPoint;
+        break;
+
+      case 'u':
+        Data[i] = HexTo7Seg[0x22] | DecimalPoint;
+        break;
+
+      case 'U':
+        Data[i] = HexTo7Seg[0x23] | DecimalPoint;
+        break;
+
+      case 'y':
+      case 'Y':
+        Data[i] = HexTo7Seg[0x24] | DecimalPoint;
+        break;
+
+      case '_':
+        Data[i] = HexTo7Seg[0x25] | DecimalPoint;
+        break;
+
+      case '-':
+        Data[i] = HexTo7Seg[0x26] | DecimalPoint;
+        break;
+
+      case '~':
+        Data[i] = HexTo7Seg[0x27] | DecimalPoint;
+        break;
+
+      default:
+        Data[i] = 0;
+        break;
+      }
+    }
+  }
+}
+
 
 
 /**
@@ -528,56 +757,9 @@ TM1629_Result_t
 TM1629_SetSingleDigit_HEX(TM1629_Handler_t *Handler,
                           uint8_t DigitData, uint8_t DigitPos)
 {
-  uint8_t DigitDataHEX = 0;
-  uint8_t DecimalPoint = DigitData & 0x80;
-
-  DigitData &= 0x7F;
-
-  if (DigitData <= 15)
-  {
-    DigitDataHEX = HexTo7Seg[DigitData] | DecimalPoint;
-  }
-  else
-  {
-    switch (DigitData)
-    {
-    case 'A':
-    case 'a':
-      DigitDataHEX = HexTo7Seg[0x0A] | DecimalPoint;
-      break;
-
-    case 'B':
-    case 'b':
-      DigitDataHEX = HexTo7Seg[0x0B] | DecimalPoint;
-      break;
-
-    case 'C':
-    case 'c':
-      DigitDataHEX = HexTo7Seg[0x0C] | DecimalPoint;
-      break;
-
-    case 'D':
-    case 'd':
-      DigitDataHEX = HexTo7Seg[0x0D] | DecimalPoint;
-      break;
-
-    case 'E':
-    case 'e':
-      DigitDataHEX = HexTo7Seg[0x0E] | DecimalPoint;
-      break;
-
-    case 'F':
-    case 'f':
-      DigitDataHEX = HexTo7Seg[0x0F] | DecimalPoint;
-      break;
-
-    default:
-      DigitDataHEX = 0;
-      break;
-    }
-  }
-
-  return TM1629_SetSingleDigit(Handler, DigitDataHEX, DigitPos);
+  uint8_t DigitDataOut = 0;
+  TM1629_HexTo7Seg((const uint8_t *)&DigitData, &DigitDataOut, 1);
+  return TM1629_SetSingleDigit(Handler, DigitDataOut, DigitPos);
 }
 
 
@@ -602,70 +784,24 @@ TM1629_Result_t
 TM1629_SetMultipleDigit_HEX(TM1629_Handler_t *Handler, const uint8_t *DigitData,
                             uint8_t StartAddr, uint8_t Count)
 {
-  uint8_t DigitDataHEX[10];
-  uint8_t DecimalPoint = 0;
+  uint8_t DigitDataOut[16];
 
-  for (uint8_t i = 0; i < Count; i++)
-  {
-    DecimalPoint = DigitData[i] & 0x80;
+  if (Count > 16)
+    Count = 16;
 
-    if ((DigitData[i] & 0x7F) >= 0 && (DigitData[i] & 0x7F) <= 15)
-    {
-      DigitDataHEX[i] = HexTo7Seg[DigitData[i] & 0x7F] | DecimalPoint;
-    }
-    else
-    {
-      switch (DigitData[i] & 0x7F)
-      {
-      case 'A':
-      case 'a':
-        DigitDataHEX[i] = HexTo7Seg[0x0A] | DecimalPoint;
-        break;
-
-      case 'B':
-      case 'b':
-        DigitDataHEX[i] = HexTo7Seg[0x0B] | DecimalPoint;
-        break;
-
-      case 'C':
-      case 'c':
-        DigitDataHEX[i] = HexTo7Seg[0x0C] | DecimalPoint;
-        break;
-
-      case 'D':
-      case 'd':
-        DigitDataHEX[i] = HexTo7Seg[0x0D] | DecimalPoint;
-        break;
-
-      case 'E':
-      case 'e':
-        DigitDataHEX[i] = HexTo7Seg[0x0E] | DecimalPoint;
-        break;
-
-      case 'F':
-      case 'f':
-        DigitDataHEX[i] = HexTo7Seg[0x0F] | DecimalPoint;
-        break;
-
-      default:
-        DigitDataHEX[i] = 0;
-        break;
-      }
-    }
-  }
-
+  TM1629_HexTo7Seg(DigitData, DigitDataOut, Count);
   return TM1629_SetMultipleDigit(Handler,
-                                 (const uint8_t *)DigitDataHEX, StartAddr, Count);
+                                 (const uint8_t *)DigitDataOut, StartAddr, Count);
 }
 
 
 /**
  * @brief  Set data to single digit in char format
  * @param  Handler: Pointer to handler
- * @param  DigitData: Digit data
- *                    Supported chars 0,1,2,3,4,5,6,7,8,9
- *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
- *                                    t,u,U,y,_,-,Overscore (use ~ to set)
+ * @param  Char: Character to display
+ *               Supported chars 0,1,2,3,4,5,6,7,8,9
+ *                               A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
+ *                               t,u,U,y,_,-,Overscore (use ~ to set)
  * @param  DigitPos: Digit position
  *         - 0: Seg1
  *         - 1: Seg2
@@ -678,171 +814,20 @@ TM1629_SetMultipleDigit_HEX(TM1629_Handler_t *Handler, const uint8_t *DigitData,
  */
 TM1629_Result_t
 TM1629_SetSingleDigit_CHAR(TM1629_Handler_t *Handler,
-                           uint8_t DigitData, uint8_t DigitPos)
+                           char Char, uint8_t DigitPos)
 {
-  uint8_t DigitDataHEX = 0;
-  uint8_t DecimalPoint = DigitData & 0x80;
-
-  DigitData &= 0x7F;
-
-  // numbers 0 - 9
-  if ((DigitData & 0x7F) >= (uint8_t)'0' && (DigitData & 0x7F) <= (uint8_t)'9')
-  {
-    DigitDataHEX = HexTo7Seg[(DigitData - 48) & 0x7F] | DecimalPoint;
-  }
-  else
-  {
-    switch (DigitData & 0x7F)
-    {
-    case 'A':
-    case 'a':
-      DigitDataHEX = HexTo7Seg[0x0A] | DecimalPoint;
-      break;
-
-    case 'B':
-    case 'b':
-      DigitDataHEX = HexTo7Seg[0x0B] | DecimalPoint;
-      break;
-
-    case 'C':
-    case 'c':
-      DigitDataHEX = HexTo7Seg[0x0C] | DecimalPoint;
-      break;
-
-    case 'D':
-    case 'd':
-      DigitDataHEX = HexTo7Seg[0x0D] | DecimalPoint;
-      break;
-
-    case 'E':
-    case 'e':
-      DigitDataHEX = HexTo7Seg[0x0E] | DecimalPoint;
-      break;
-
-    case 'F':
-    case 'f':
-      DigitDataHEX = HexTo7Seg[0x0F] | DecimalPoint;
-      break;
-
-    case 'g':
-      DigitDataHEX = HexTo7Seg[0x10] | DecimalPoint;
-      break;
-
-    case 'G':
-      DigitDataHEX = HexTo7Seg[0x11] | DecimalPoint;
-      break;
-
-    case 'h':
-      DigitDataHEX = HexTo7Seg[0x12] | DecimalPoint;
-      break;
-
-    case 'H':
-      DigitDataHEX = HexTo7Seg[0x13] | DecimalPoint;
-      break;
-
-    case 'i':
-      DigitDataHEX = HexTo7Seg[0x14] | DecimalPoint;
-      break;
-
-    case 'I':
-      DigitDataHEX = HexTo7Seg[0x15] | DecimalPoint;
-      break;
-
-    case 'j':
-    case 'J':
-      DigitDataHEX = HexTo7Seg[0x16] | DecimalPoint;
-      break;
-
-    case 'l':
-      DigitDataHEX = HexTo7Seg[0x17] | DecimalPoint;
-      break;
-
-    case 'L':
-      DigitDataHEX = HexTo7Seg[0x18] | DecimalPoint;
-      break;
-
-    case 'n':
-      DigitDataHEX = HexTo7Seg[0x19] | DecimalPoint;
-      break;
-
-    case 'N':
-      DigitDataHEX = HexTo7Seg[0x1A] | DecimalPoint;
-      break;
-
-    case 'o':
-      DigitDataHEX = HexTo7Seg[0x1B] | DecimalPoint;
-      break;
-
-    case 'O':
-      DigitDataHEX = HexTo7Seg[0x1C] | DecimalPoint;
-      break;
-
-    case 'p':
-    case 'P':
-      DigitDataHEX = HexTo7Seg[0x1D] | DecimalPoint;
-      break;
-
-    case 'q':
-    case 'Q':
-      DigitDataHEX = HexTo7Seg[0x1E] | DecimalPoint;
-      break;
-
-    case 'r':
-    case 'R':
-      DigitDataHEX = HexTo7Seg[0x1F] | DecimalPoint;
-      break;
-
-    case 's':
-    case 'S':
-      DigitDataHEX = HexTo7Seg[0x20] | DecimalPoint;
-      break;
-
-    case 't':
-    case 'T':
-      DigitDataHEX = HexTo7Seg[0x21] | DecimalPoint;
-      break;
-
-    case 'u':
-      DigitDataHEX = HexTo7Seg[0x22] | DecimalPoint;
-      break;
-
-    case 'U':
-      DigitDataHEX = HexTo7Seg[0x23] | DecimalPoint;
-      break;
-
-    case 'y':
-    case 'Y':
-      DigitDataHEX = HexTo7Seg[0x24] | DecimalPoint;
-      break;
-
-    case '_':
-      DigitDataHEX = HexTo7Seg[0x25] | DecimalPoint;
-      break;
-
-    case '-':
-      DigitDataHEX = HexTo7Seg[0x26] | DecimalPoint;
-      break;
-
-    case '~':
-      DigitDataHEX = HexTo7Seg[0x27] | DecimalPoint;
-      break;
-
-    default:
-      DigitDataHEX = 0;
-      break;
-    }
-  }
-
-  return TM1629_SetSingleDigit(Handler, DigitDataHEX, DigitPos);
+  uint8_t DigitData = 0;
+  TM1629_StringTo7Seg((const char *)&DigitData, &DigitData, 1);
+  return TM1629_SetSingleDigit(Handler, DigitData, DigitPos);
 }
 
 /**
  * @brief  Set data to multiple digits in char format
  * @param  Handler: Pointer to handler
- * @param  DigitData: Array to Digits data. 
- *                    Supported chars 0,1,2,3,4,5,6,7,8,9
- *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
- *                                    t,u,U,y,_,-,Overscore (use ~ to set)
+ * @param  Str: String of characters
+ *              Supported chars 0,1,2,3,4,5,6,7,8,9
+ *                              A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
+ *                              t,u,U,y,_,-,Overscore (use ~ to set)
  * 
  * @param  StartAddr: First digit position
  *         - 0: Seg1
@@ -856,167 +841,17 @@ TM1629_SetSingleDigit_CHAR(TM1629_Handler_t *Handler,
  *         - TM1629_OK: Operation was successful
  */
 TM1629_Result_t
-TM1629_SetMultipleDigit_CHAR(TM1629_Handler_t *Handler, const uint8_t *DigitData,
-                            uint8_t StartAddr, uint8_t Count)
+TM1629_SetMultipleDigit_CHAR(TM1629_Handler_t *Handler, const char *Str,
+                             uint8_t StartAddr, uint8_t Count)
 {
-  uint8_t DigitDataHEX[10];
-  uint8_t DecimalPoint = 0;
+  uint8_t DigitData[16];
 
-  for (uint8_t i = 0; i < Count; i++)
-  {
-    DecimalPoint = DigitData[i] & 0x80;
+  if (Count > 16)
+    Count = 16;
 
-    // numbers 0 - 9
-    if ((DigitData[i] & 0x7F) >= (uint8_t)'0' && (DigitData[i] & 0x7F) <= (uint8_t)'9')
-    {
-      DigitDataHEX[i] = HexTo7Seg[(DigitData[i]-48) & 0x7F] | DecimalPoint;
-    }
-    else
-    {
-      switch (DigitData[i] & 0x7F)
-      {
-      case 'A':
-      case 'a':
-        DigitDataHEX[i] = HexTo7Seg[0x0A] | DecimalPoint;
-        break;
-
-      case 'B':
-      case 'b':
-        DigitDataHEX[i] = HexTo7Seg[0x0B] | DecimalPoint;
-        break;
-
-      case 'C':
-      case 'c':
-        DigitDataHEX[i] = HexTo7Seg[0x0C] | DecimalPoint;
-        break;
-
-      case 'D':
-      case 'd':
-        DigitDataHEX[i] = HexTo7Seg[0x0D] | DecimalPoint;
-        break;
-
-      case 'E':
-      case 'e':
-        DigitDataHEX[i] = HexTo7Seg[0x0E] | DecimalPoint;
-        break;
-
-      case 'F':
-      case 'f':
-        DigitDataHEX[i] = HexTo7Seg[0x0F] | DecimalPoint;
-        break;
-
-      case 'g':
-        DigitDataHEX[i] = HexTo7Seg[0x10] | DecimalPoint;
-      break;
-      
-      case 'G':
-        DigitDataHEX[i] = HexTo7Seg[0x11] | DecimalPoint;
-      break;
-
-      case 'h':
-        DigitDataHEX[i] = HexTo7Seg[0x12] | DecimalPoint;
-      break;
-      
-      case 'H':
-        DigitDataHEX[i] = HexTo7Seg[0x13] | DecimalPoint;
-      break;
-
-      case 'i':
-        DigitDataHEX[i] = HexTo7Seg[0x14] | DecimalPoint;
-      break;
-      
-      case 'I':
-        DigitDataHEX[i] = HexTo7Seg[0x15] | DecimalPoint;
-      break;
-
-      case 'j':
-      case 'J':
-        DigitDataHEX[i] = HexTo7Seg[0x16] | DecimalPoint;
-      break;
-
-      case 'l':
-        DigitDataHEX[i] = HexTo7Seg[0x17] | DecimalPoint;
-      break;
-
-      case 'L':
-        DigitDataHEX[i] = HexTo7Seg[0x18] | DecimalPoint;
-      break;
-
-      case 'n':
-        DigitDataHEX[i] = HexTo7Seg[0x19] | DecimalPoint;
-      break;
-      
-      case 'N':
-        DigitDataHEX[i] = HexTo7Seg[0x1A] | DecimalPoint;
-      break;
-
-      case 'o':
-        DigitDataHEX[i] = HexTo7Seg[0x1B] | DecimalPoint;
-      break;
-      
-      case 'O':
-        DigitDataHEX[i] = HexTo7Seg[0x1C] | DecimalPoint;
-      break;
-
-      case 'p':
-      case 'P':
-        DigitDataHEX[i] = HexTo7Seg[0x1D] | DecimalPoint;
-      break;
-
-      case 'q':
-      case 'Q':
-        DigitDataHEX[i] = HexTo7Seg[0x1E] | DecimalPoint;
-      break;
-
-      case 'r':
-      case 'R':
-        DigitDataHEX[i] = HexTo7Seg[0x1F] | DecimalPoint;
-      break;
-
-      case 's':
-      case 'S':
-        DigitDataHEX[i] = HexTo7Seg[0x20] | DecimalPoint;
-      break;
-
-      case 't':
-      case 'T':
-        DigitDataHEX[i] = HexTo7Seg[0x21] | DecimalPoint;
-      break;
-
-      case 'u':
-        DigitDataHEX[i] = HexTo7Seg[0x22] | DecimalPoint;
-      break;
-
-      case 'U':
-        DigitDataHEX[i] = HexTo7Seg[0x23] | DecimalPoint;
-      break;
-
-      case 'y':
-      case 'Y':
-        DigitDataHEX[i] = HexTo7Seg[0x24] | DecimalPoint;
-      break;
-
-      case '_':
-        DigitDataHEX[i] = HexTo7Seg[0x25] | DecimalPoint;
-      break;
-
-      case '-':
-        DigitDataHEX[i] = HexTo7Seg[0x26] | DecimalPoint;
-      break;
-
-      case '~':
-        DigitDataHEX[i] = HexTo7Seg[0x27] | DecimalPoint;
-      break;
-
-      default:
-        DigitDataHEX[i] = 0;
-        break;
-      }
-    }
-  }
-
+  TM1629_StringTo7Seg(Str, DigitData, Count);
   return TM1629_SetMultipleDigit(Handler,
-                                 (const uint8_t *)DigitDataHEX, StartAddr, Count);
+                                 (const uint8_t *)DigitData, StartAddr, Count);
 }
 
 
